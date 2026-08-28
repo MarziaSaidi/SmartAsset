@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advisor Match — Prototype</title>
+<meta name="description" content="A working prototype: a 5-step redesign of SmartAsset's advisor-matching quiz.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Mulish:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="shell">
+
+  <div class="proto-topbar">
+    <a class="back-link" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Case study
+    </a>
+  </div>
+
+  <div class="product">
+    <div class="brandbar">
+      <span class="brand">smart<b>asset</b> · advisor match</span>
+      <span class="stepcount" id="stepcount" aria-hidden="true"></span>
+    </div>
+    <div class="progress-track" id="progressTrack" style="display:none;">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+
+    <div class="card" id="app" role="region" aria-live="polite"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

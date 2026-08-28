@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advisor Match Redesign — SmartAsset</title>
+<meta name="description" content="I picked one real problem in SmartAsset's advisor-matching quiz and fixed it. A working prototype, built for the Product Designer application.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Mulish:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="shell">
+
+  <header class="case-hero">
+    <span class="eyebrow">Reverse job hunt · SmartAsset, Product Designer</span>
+    <h1>I picked one real problem in SmartAsset's product and fixed it.</h1>
+    <p class="lede">The whole thing works. It's not a mockup.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="prototype.html">Try the prototype
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <a class="btn btn-ghost" href="https://job-boards.greenhouse.io/smartasset/jobs/8653668002" target="_blank" rel="noopener">View the job posting</a>
+    </div>
+  </header>
+
+  <div class="case-article">
+    <section>
+      <h3>Why this flow</h3>
+      <p>This quiz is where the advisor-matching journey starts. Every advisor lead goes through it, so small amounts of friction here matter.</p>
+    </section>
+    <section>
+      <h3>The problem</h3>
+      <p>I ran it myself. ~40 screens, no idea how long it would take, and most questions already had an answer selected before I'd even read them.</p>
+      <p>The biggest problem was trust. The quiz asks for sensitive financial information, but doesn't explain why it's needed. And the disclosure that advisors can pay to rank higher is buried in the flow instead of appearing when the user is deciding whether to trust the result.</p>
+    </section>
+    <section>
+      <h3>What I did</h3>
+      <p>I cut the core flow to 5 steps and made every answer an intentional choice.</p>
+      <p>I added a quick "why we're asking" explanation where the purpose wasn't obvious, made the progress and time commitment clear, and moved the ranking disclosure to right before the results, where that information actually matters.</p>
+      <p>I also kept the matching logic focused on the information that actually contributes to the match instead of making users answer questions just to get through the funnel.</p>
+    </section>
+    <section>
+      <h3>What I'd track</h3>
+      <p>Completion first. Then time to finish, backtracking, drop-off by step, and requests sent.</p>
+      <details class="exp-details">
+        <summary>How I'd test it</summary>
+        <table class="exp-table">
+          <tr><th>Bet</th><td>Cut the uncertainty in this flow and more people finish it.</td></tr>
+          <tr><th>Control</th><td>What's live now — ~40 steps, no time estimate, answers picked for you.</td></tr>
+          <tr><th>Variant</th><td>This — 5 steps, intentional choices, matching explained before results.</td></tr>
+          <tr><th>Watching</th><td>Completion rate first. Then time to finish, backtracking, drop-off per step, and requests sent.</td></tr>
+        </table>
+        <p class="exp-note">I'd also watch <strong>lead quality</strong> as a guardrail. A higher completion rate isn't a win if the shorter flow produces worse matches.</p>
+      </details>
+    </section>
+  </div>
+
+  <div class="case-footer">
+    <a class="btn btn-primary" href="prototype.html">Try the prototype
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+    <p class="case-meta">Built for the <a href="https://job-boards.greenhouse.io/smartasset/jobs/8653668002" target="_blank" rel="noopener">Product Designer role at SmartAsset</a>.<br>The advisor matches at the end are fake and labeled as such. Everything before that actually works.</p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,657 @@
+<title>Advisor Match Redesign</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Mulish:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --paper:#F4F4F6; --surface:#FFFFFF; --surface-2:#F9F9F9;
+    --ink:#333333; --ink-soft:#666B72; --ink-faint:#9298A0; --ink-wordmark:#161616;
+    --line:#E7E7EA; --line-strong:#D6D6DA;
+    --ember:#FF600A; --ember-strong:#EB570A; --ember-hover:#D14C08; --on-ember:#FFFFFF; --ember-tint:#FFF0E6;
+    --harbor:#2AA6DE; --harbor-strong:#1789BD; --harbor-tint:#E7F5FC;
+    --moss:#1E8E4F; --moss-tint:#E9F7EF;
+    --brick:#D33B3B; --brick-tint:#FCEBEB;
+    --radius-sm:8px; --radius-md:12px; --radius-lg:20px; --radius-pill:100px;
+    --shadow-card:0 1px 2px rgba(20,20,24,.04), 0 10px 28px -16px rgba(20,20,24,.14);
+    --shadow-pop:0 4px 10px -4px rgba(20,20,24,.1), 0 20px 40px -20px rgba(20,20,24,.2);
+    --ease:cubic-bezier(.22,.8,.24,1); --dur-fast:120ms; --dur:220ms; --dur-slow:360ms;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#14171B; --surface:#1D2126; --surface-2:#252A30;
+      --ink:#E7E8EA; --ink-soft:#A0A6AD; --ink-faint:#6B7178; --ink-wordmark:#F3F4F5;
+      --line:#333940; --line-strong:#454C54;
+      --ember:#FF7A33; --ember-strong:#FF6A18; --ember-hover:#FF8A4D; --on-ember:#1A0E04; --ember-tint:#2E1D10;
+      --harbor:#5FC0EE; --harbor-strong:#8AD1F4; --harbor-tint:#122A35;
+      --moss:#4FBE82; --moss-tint:#102A1C;
+      --brick:#E97575; --brick-tint:#301616;
+      --shadow-card:0 1px 0 rgba(0,0,0,.4), 0 14px 34px -18px rgba(0,0,0,.6);
+      --shadow-pop:0 4px 10px -4px rgba(0,0,0,.5), 0 24px 48px -20px rgba(0,0,0,.65);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14171B; --surface:#1D2126; --surface-2:#252A30;
+    --ink:#E7E8EA; --ink-soft:#A0A6AD; --ink-faint:#6B7178; --ink-wordmark:#F3F4F5;
+    --line:#333940; --line-strong:#454C54;
+    --ember:#FF7A33; --ember-strong:#FF6A18; --ember-hover:#FF8A4D; --on-ember:#1A0E04; --ember-tint:#2E1D10;
+    --harbor:#5FC0EE; --harbor-strong:#8AD1F4; --harbor-tint:#122A35;
+    --moss:#4FBE82; --moss-tint:#102A1C;
+    --brick:#E97575; --brick-tint:#301616;
+    --shadow-card:0 1px 0 rgba(0,0,0,.4), 0 14px 34px -18px rgba(0,0,0,.6);
+    --shadow-pop:0 4px 10px -4px rgba(0,0,0,.5), 0 24px 48px -20px rgba(0,0,0,.65);
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Mulish", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  h1,h2,h3{ font-family:"Poppins", "Mulish", ui-sans-serif, sans-serif; font-weight:600; letter-spacing:-.01em; text-wrap:balance; margin:0; }
+  p{ margin:0; }
+  .mono{ font-variant-numeric:tabular-nums; }
+  a{ color:var(--harbor); }
+  button{ font-family:inherit; }
+
+  .shell{ max-width:1040px; margin:0 auto; padding: clamp(16px,4vw,40px) clamp(16px,5vw,24px) 80px; }
+
+  /* ---------- Case study frame ---------- */
+  .case{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md);
+    margin-bottom:clamp(20px,4vw,32px); box-shadow:var(--shadow-card);
+  }
+  .case summary{
+    list-style:none; cursor:pointer; padding:14px 18px; display:flex; align-items:center; gap:12px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .case summary::-webkit-details-marker{ display:none; }
+  .case summary .eyebrow{
+    font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--ember-strong);
+    background:var(--ember-tint); padding:3px 8px; border-radius:100px; white-space:nowrap; flex-shrink:0;
+  }
+  .case summary .teaser{ color:var(--ink-soft); font-size:14px; flex:1; min-width:0; }
+  .case summary .chev{ color:var(--ink-faint); flex-shrink:0; transition:transform var(--dur) var(--ease); }
+  .case[open] summary .chev{ transform:rotate(90deg); }
+  .case .case-body{ padding:4px 18px 18px; border-top:1px solid var(--line); }
+  .case-article{ display:flex; flex-direction:column; gap:22px; max-width:640px; padding-top:16px; }
+  .case-article h3{
+    font-family:"Poppins","Mulish",sans-serif; font-size:12.5px; font-weight:700; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--harbor-strong); margin-bottom:8px;
+  }
+  .case-article p{ margin:0; font-size:14.5px; color:var(--ink); line-height:1.65; }
+  .case-article p + p{ margin-top:10px; }
+  .case-meta{ font-size:13px; color:var(--ink-faint); line-height:1.6; padding-top:16px; margin-top:18px; border-top:1px solid var(--line); }
+  .exp-details{ margin-top:12px; }
+  .exp-details summary{ padding:0; display:inline-flex; align-items:center; gap:4px; font-size:13px; font-weight:600; color:var(--harbor); cursor:pointer; }
+  .exp-table{ margin-top:12px; font-size:13.5px; border-collapse:collapse; width:100%; }
+  .exp-table tr{ border-top:1px solid var(--line); }
+  .exp-table tr:first-child{ border-top:none; }
+  .exp-table th{ text-align:left; color:var(--ink-faint); font-weight:600; padding:8px 16px 8px 0; vertical-align:top; white-space:nowrap; width:1%; }
+  .exp-table td{ padding:8px 0; color:var(--ink); line-height:1.55; }
+  .exp-note{ margin-top:12px; font-size:13.5px; color:var(--ink-soft); line-height:1.6; }
+  .exp-note strong{ color:var(--ink); }
+  @media (max-width:520px){ summary .teaser{ display:none; } }
+
+  /* ---------- Product shell ---------- */
+  .product{ display:flex; flex-direction:column; align-items:center; }
+  .brandbar{ display:flex; align-items:center; justify-content:space-between; width:100%; max-width:600px; margin-bottom:20px; }
+  .brand{ font-family:"Poppins","Mulish",sans-serif; font-size:15px; font-weight:600; letter-spacing:-.01em; color:var(--ink-wordmark); }
+  .brand b{ color:var(--harbor); font-weight:700; }
+  .stepcount{ font-size:12px; color:var(--ink-faint); }
+
+  .progress-track{ width:100%; max-width:600px; height:4px; background:var(--line); border-radius:100px; overflow:hidden; margin-bottom:28px; }
+  .progress-fill{ height:100%; background:var(--harbor); border-radius:100px; transition:width var(--dur-slow) var(--ease); }
+
+  .card{
+    width:100%; max-width:600px; background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius-lg); box-shadow:var(--shadow-card); padding:clamp(24px,5vw,40px);
+  }
+
+  .step-icon{
+    width:40px; height:40px; border-radius:var(--radius-md); background:var(--harbor-tint); color:var(--harbor);
+    display:flex; align-items:center; justify-content:center; margin-bottom:16px;
+  }
+  .step-icon svg{ width:20px; height:20px; }
+
+  .card h2{ font-size:clamp(20px,3vw,25px); margin-bottom:6px; }
+  .card .sub{ color:var(--ink-soft); font-size:14.5px; max-width:46ch; margin-bottom:22px; }
+
+  .why{
+    display:flex; gap:8px; align-items:flex-start; background:var(--surface-2); border-radius:var(--radius-sm);
+    padding:10px 12px; font-size:13px; color:var(--ink-soft); margin-top:14px;
+  }
+  .why svg{ width:15px; height:15px; flex-shrink:0; margin-top:2px; color:var(--ink-faint); }
+
+  fieldset{ border:0; padding:0; margin:0 0 22px; }
+  legend{ font-size:13px; font-weight:600; color:var(--ink-soft); margin-bottom:10px; padding:0; }
+
+  /* option cards (radio/checkbox) */
+  .options{ display:flex; flex-direction:column; gap:8px; }
+  .opt{ position:relative; }
+  .opt input{ position:absolute; opacity:0; width:1px; height:1px; }
+  .opt label{
+    display:flex; align-items:center; gap:12px; padding:13px 16px; border:1.5px solid transparent;
+    border-radius:var(--radius-pill); cursor:pointer; transition:border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+    background:var(--surface-2);
+  }
+  .opt label:hover{ background:var(--line); }
+  .opt input:checked + label{ border-color:var(--harbor); background:var(--harbor-tint); }
+  .opt input:focus-visible + label{ outline:2px solid var(--harbor); outline-offset:2px; }
+  .opt-icon{ width:30px; height:30px; border-radius:8px; background:var(--surface-2); color:var(--ink-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .opt-icon svg{ width:16px; height:16px; }
+  .opt input:checked + label .opt-icon{ background:var(--harbor); color:#fff; }
+  .opt-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .opt-title{ font-size:14.5px; font-weight:600; display:block; }
+  .opt-desc{ font-size:13px; color:var(--ink-soft); display:block; }
+  .opt-mark{ width:18px; height:18px; border-radius:50%; border:2px solid var(--line-strong); flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+  .opt-mark svg{ width:11px; height:11px; color:#fff; opacity:0; transition:opacity var(--dur-fast) var(--ease); }
+  .opt input:checked + label .opt-mark{ border-color:var(--harbor); background:var(--harbor); }
+  .opt input:checked + label .opt-mark svg{ opacity:1; }
+  .opt.checkbox .opt-mark{ border-radius:5px; }
+
+  /* compact segmented pills, used for age / amount ranges */
+  .pills{ display:flex; flex-wrap:wrap; gap:8px; }
+  .pill{ position:relative; }
+  .pill input{ position:absolute; opacity:0; width:1px; height:1px; }
+  .pill label{
+    display:inline-flex; align-items:center; padding:9px 14px; border:1px solid var(--line); border-radius:100px;
+    font-size:13.5px; font-weight:500; cursor:pointer; background:var(--surface); transition:all var(--dur-fast) var(--ease);
+  }
+  .pill label:hover{ border-color:var(--line-strong); }
+  .pill input:checked + label{ border-color:var(--harbor); background:var(--harbor); color:#fff; }
+  .pill input:focus-visible + label{ outline:2px solid var(--harbor); outline-offset:2px; }
+
+  .field{ margin-bottom:18px; }
+  .field label.flabel{ display:block; font-size:13px; font-weight:600; color:var(--ink-soft); margin-bottom:8px; }
+  select{
+    width:100%; appearance:none; background:var(--surface) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23666B72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>') no-repeat right 14px center;
+    border:1.5px solid var(--line); border-radius:var(--radius-md); padding:12px 40px 12px 14px; font-size:15px; color:var(--ink); font-family:inherit;
+    transition:border-color var(--dur-fast) var(--ease);
+  }
+  select:focus-visible{ outline:2px solid var(--harbor); outline-offset:1px; border-color:var(--harbor); }
+  select[aria-invalid="true"]{ border-color:var(--brick); }
+  .err{ display:flex; gap:6px; align-items:center; color:var(--brick); font-size:13px; margin-top:8px; }
+  .err svg{ width:14px; height:14px; flex-shrink:0; }
+
+  .trust{ display:flex; gap:8px; align-items:flex-start; color:var(--moss); font-size:13px; margin-top:16px; }
+  .trust svg{ width:15px; height:15px; flex-shrink:0; margin-top:2px; }
+
+  .actions{ display:flex; align-items:center; justify-content:space-between; margin-top:26px; gap:12px; }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px; border-radius:var(--radius-pill);
+    padding:13px 26px; font-size:14.5px; font-weight:700; cursor:pointer; border:1.5px solid transparent;
+    transition:background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+    min-height:44px;
+  }
+  .btn:active{ transform:scale(.98); }
+  .btn-primary{ background:var(--ember); color:var(--on-ember); margin-left:auto; }
+  .btn-primary:hover{ background:var(--ember-hover); }
+  .btn-primary:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
+  .btn-primary:focus-visible{ outline:2px solid var(--harbor-strong); outline-offset:2px; }
+  .btn-ghost{ background:transparent; color:var(--harbor); border-color:var(--harbor); }
+  .btn-ghost:hover{ background:var(--harbor-tint); }
+  .btn-ghost:focus-visible{ outline:2px solid var(--harbor-strong); outline-offset:2px; }
+  .btn svg{ width:15px; height:15px; }
+
+  /* review */
+  .rev-list{ display:flex; flex-direction:column; border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden; margin-bottom:16px; }
+  .rev-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:13px 16px; border-bottom:1px solid var(--line); }
+  .rev-row:last-child{ border-bottom:none; }
+  .rev-k{ font-size:12px; color:var(--ink-faint); margin-bottom:2px; }
+  .rev-v{ font-size:14.5px; font-weight:500; }
+  .rev-edit{ font-size:13px; font-weight:600; color:var(--harbor); background:none; border:0; cursor:pointer; flex-shrink:0; padding:4px; }
+  .rev-edit:hover{ text-decoration:underline; }
+  .rev-edit:focus-visible{ outline:2px solid var(--harbor); outline-offset:2px; border-radius:4px; }
+
+  .method{ background:var(--surface-2); border-radius:var(--radius-md); padding:16px; margin-bottom:8px; }
+  .method h3{ font-size:14px; margin-bottom:6px; display:flex; align-items:center; gap:7px; }
+  .method h3 svg{ width:15px; height:15px; color:var(--harbor); }
+  .method p{ font-size:13.5px; color:var(--ink-soft); line-height:1.6; }
+  .method p + p{ margin-top:8px; }
+
+  /* loading */
+  .loading{ display:flex; flex-direction:column; align-items:center; text-align:center; padding:36px 0 20px; }
+  .spinner{ width:36px; height:36px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--ember-strong); margin-bottom:18px; animation:spin 900ms linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .loading p{ color:var(--ink-soft); font-size:14px; }
+  .loading .lstep{ font-size:12px; color:var(--ink-faint); margin-top:6px; }
+
+  /* results */
+  .match-card{ border:1px solid var(--line); border-radius:var(--radius-md); padding:18px; margin-bottom:12px; }
+  .match-top{ display:flex; align-items:flex-start; gap:12px; margin-bottom:12px; }
+  .match-avatar{ width:38px; height:38px; border-radius:50%; background:var(--harbor-tint); color:var(--harbor); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-weight:600; font-size:14px; }
+  .match-name{ font-size:15px; font-weight:600; }
+  .badge{ display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:600; color:var(--moss); background:var(--moss-tint); padding:3px 8px; border-radius:100px; margin-top:4px; }
+  .badge svg{ width:11px; height:11px; }
+  .match-meta{ display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink-soft); margin-bottom:14px; }
+  .match-meta span{ display:flex; align-items:center; gap:6px; }
+  .match-meta svg{ width:14px; height:14px; color:var(--ink-faint); }
+  .match-actions{ display:flex; align-items:center; gap:12px; }
+  .btn-sm{ padding:9px 16px; font-size:13.5px; min-height:auto; }
+  .requested{ display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600; color:var(--moss); }
+  .requested svg{ width:15px; height:15px; }
+  .sample-note{ display:flex; align-items:flex-start; gap:7px; font-size:12.5px; color:var(--ink-faint); margin-bottom:18px; padding:10px 12px; background:var(--surface-2); border-radius:var(--radius-sm); }
+  .sample-note svg{ width:13px; height:13px; flex-shrink:0; margin-top:2px; }
+  .how-link{ font-size:13.5px; font-weight:600; color:var(--harbor); background:none; border:0; cursor:pointer; padding:4px 0; display:inline-flex; align-items:center; gap:5px; margin-top:4px; }
+  .how-link svg{ width:15px; height:15px; flex-shrink:0; }
+  .restart{ text-align:center; margin-top:22px; }
+  .restart button{ font-size:13px; color:var(--ink-faint); background:none; border:0; cursor:pointer; text-decoration:underline; }
+
+  /* transitions */
+  .anim-enter{ animation:stepIn var(--dur-slow) var(--ease); }
+  @keyframes stepIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+  .fadein{ animation:fade var(--dur) var(--ease); }
+  @keyframes fade{ from{ opacity:0; } to{ opacity:1; } }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
+    .anim-enter, .fadein{ animation:none; }
+  }
+
+  @media (max-width:600px){
+    .actions{ flex-direction:column-reverse; align-items:stretch; }
+    .btn-primary{ margin-left:0; width:100%; }
+    .btn-ghost{ width:100%; }
+    .card{ padding:22px 18px; }
+  }
+
+  .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+</style>
+
+<div class="shell">
+
+  <details class="case" id="case" open>
+    <summary>
+      <span class="eyebrow">Reverse job hunt</span>
+      <span class="teaser">I picked one real problem in SmartAsset's product and fixed it. The whole thing works. It's not a mockup.</span>
+      <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </summary>
+    <div class="case-body">
+      <div class="case-article">
+        <section>
+          <h3>Why this flow</h3>
+          <p>This quiz is where the advisor-matching journey starts. Every advisor lead goes through it, so small amounts of friction here matter.</p>
+        </section>
+        <section>
+          <h3>The problem</h3>
+          <p>I ran it myself. ~40 screens, no idea how long it would take, and most questions already had an answer selected before I'd even read them.</p>
+          <p>The biggest problem was trust. The quiz asks for sensitive financial information, but doesn't explain why it's needed. And the disclosure that advisors can pay to rank higher is buried in the flow instead of appearing when the user is deciding whether to trust the result.</p>
+        </section>
+        <section>
+          <h3>What I did</h3>
+          <p>I cut the core flow to 5 steps and made every answer an intentional choice.</p>
+          <p>I added a quick "why we're asking" explanation where the purpose wasn't obvious, made the progress and time commitment clear, and moved the ranking disclosure to right before the results, where that information actually matters.</p>
+          <p>I also kept the matching logic focused on the information that actually contributes to the match instead of making users answer questions just to get through the funnel.</p>
+        </section>
+        <section>
+          <h3>What I'd track</h3>
+          <p>Completion first. Then time to finish, backtracking, drop-off by step, and requests sent.</p>
+          <details class="exp-details">
+            <summary>How I'd test it</summary>
+            <table class="exp-table">
+              <tr><th>Bet</th><td>Cut the uncertainty in this flow and more people finish it.</td></tr>
+              <tr><th>Control</th><td>What's live now — ~40 steps, no time estimate, answers picked for you.</td></tr>
+              <tr><th>Variant</th><td>This — 5 steps, intentional choices, matching explained before results.</td></tr>
+              <tr><th>Watching</th><td>Completion rate first. Then time to finish, backtracking, drop-off per step, and requests sent.</td></tr>
+            </table>
+            <p class="exp-note">I'd also watch <strong>lead quality</strong> as a guardrail. A higher completion rate isn't a win if the shorter flow produces worse matches.</p>
+          </details>
+        </section>
+      </div>
+      <p class="case-meta">Built for the <a href="https://job-boards.greenhouse.io/smartasset/jobs/8653668002" target="_blank" rel="noopener">Product Designer role at SmartAsset</a>.<br>The advisor matches at the end are fake and labeled as such. Everything before that actually works.</p>
+    </div>
+  </details>
+
+  <div class="product">
+    <div class="brandbar">
+      <span class="brand">smart<b>asset</b> · advisor match</span>
+      <span class="stepcount" id="stepcount" aria-hidden="true"></span>
+    </div>
+    <div class="progress-track" id="progressTrack" style="display:none;">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+
+    <div class="card" id="app" role="region" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var ICON = {
+    compass:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>',
+    trending:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+    shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    sprout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 7 8 5 4 5c0 5 2 8 8 8"/><path d="M12 12c0-4 3-6 8-6 0 4-2 7-8 7"/></svg>',
+    user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>',
+    wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="17" cy="15" r="1.2"/></svg>',
+    pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    chevron:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+    arrowleft:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>',
+    arrowright:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
+    info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="11"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+    lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>',
+    scale:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7l-3 7a4 4 0 0 0 7 0z"/><path d="M19 7l-3 7a4 4 0 0 0 7 0z"/><path d="M5 7h14"/></svg>',
+    calendar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    video:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>'
+  };
+
+  var STEP_ORDER = ["goal","about","snapshot","location","review"];
+  var STEP_LABEL = {goal:"Your goal", about:"About you", snapshot:"Financial snapshot", location:"Location", review:"Review"};
+
+  var GOALS = [
+    {v:"retirement", icon:"compass", title:"Planning for retirement", desc:"Get income and savings on track for the years ahead."},
+    {v:"growth", icon:"trending", title:"Growing my investments", desc:"Put savings to work toward long-term goals."},
+    {v:"estate", icon:"shield", title:"Estate & legacy planning", desc:"Protect assets and plan for what you leave behind."},
+    {v:"starting", icon:"sprout", title:"Just getting started", desc:"New to financial planning and want a starting point."}
+  ];
+  var AGES = ["Under 45","45 - 55","56 - 65","66 - 70","71 - 75","Over 75"];
+  var RETIRE_IN = ["I'm already retired","1 - 4 years","5 - 9 years","10 - 19 years","20 - 29 years","30+ years"];
+  var ACCOUNTS = [
+    {v:"401k", title:"401(k) or employer plan", desc:"Workplace retirement account"},
+    {v:"ira", title:"IRA", desc:"Traditional or Roth"},
+    {v:"brokerage", title:"Brokerage account", desc:"Taxable investment account"},
+    {v:"pension", title:"Pension", desc:"Employer-funded retirement income"},
+    {v:"none", title:"None of these yet", desc:"Starting from scratch"}
+  ];
+  var ASSETS = ["Less than $25,000","$25,000 – $99,999","$100,000 – $249,999","$250,000 – $999,999","$1,000,000 – $4,999,999","Over $5,000,000"];
+  var STATES = ["Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming","District of Columbia"];
+  var MEETING = [
+    {v:"person", icon:"pin", title:"In person", desc:"Meet locally with an advisor near you."},
+    {v:"remote", icon:"video", title:"Remote / video", desc:"Meet from anywhere by phone or video call."},
+    {v:"either", icon:"user", title:"Either works", desc:"Open to whichever fits best."}
+  ];
+  var GOAL_FOCUS = {
+    retirement:"Retirement income, Social Security timing",
+    growth:"Portfolio strategy, tax-efficient investing",
+    estate:"Estate planning, trusts & legacy",
+    starting:"Financial planning fundamentals"
+  };
+
+  var state = {
+    step: "intro",
+    editing: false,
+    answers: { goal:null, age:null, retireIn:null, accounts:[], assets:null, state:null, meeting:null },
+    errors: {},
+    requested: {}
+  };
+
+  var app = document.getElementById("app");
+  var progressTrack = document.getElementById("progressTrack");
+  var progressFill = document.getElementById("progressFill");
+  var stepcount = document.getElementById("stepcount");
+
+  function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function updateProgress(){
+    var idx = STEP_ORDER.indexOf(state.step);
+    if(idx === -1){ progressTrack.style.display = "none"; stepcount.textContent = ""; return; }
+    progressTrack.style.display = "block";
+    var pct = ((idx+1)/STEP_ORDER.length)*100;
+    progressFill.style.width = pct + "%";
+    stepcount.textContent = "Step " + (idx+1) + " of " + STEP_ORDER.length + " · " + STEP_LABEL[state.step];
+  }
+
+  function optionCard(kind, name, value, checked, iconSvg, title, desc){
+    var id = name + "-" + value;
+    var type = kind === "checkbox" ? "checkbox" : "radio";
+    return '<div class="opt '+ (kind==="checkbox"?"checkbox":"") +'">' +
+      '<input type="'+type+'" id="'+id+'" name="'+name+'" value="'+esc(value)+'" '+(checked?"checked":"")+' data-field="'+name+'" data-kind="'+kind+'">' +
+      '<label for="'+id+'">' +
+        (iconSvg ? '<span class="opt-icon">'+iconSvg+'</span>' : '') +
+        '<span class="opt-text"><span class="opt-title">'+esc(title)+'</span>'+(desc?'<span class="opt-desc">'+esc(desc)+'</span>':'')+'</span>' +
+        '<span class="opt-mark">'+ICON.check+'</span>' +
+      '</label></div>';
+  }
+
+  function pill(name, value, checked){
+    var id = name + "-pill-" + value.replace(/[^a-z0-9]/gi,"");
+    return '<div class="pill"><input type="radio" id="'+id+'" name="'+name+'" value="'+esc(value)+'" '+(checked?"checked":"")+' data-field="'+name+'" data-kind="radio">' +
+      '<label for="'+id+'">'+esc(value)+'</label></div>';
+  }
+
+  function continueBtn(label, enabled){
+    return '<button type="button" class="btn btn-primary" id="continueBtn" '+(enabled?"":"disabled")+'>'+esc(label)+' '+ICON.arrowright+'</button>';
+  }
+  function backBtn(){
+    return '<button type="button" class="btn btn-ghost" data-action="back">'+ICON.arrowleft+' Back</button>';
+  }
+
+  function whyBlock(text){
+    return '<div class="why">'+ICON.info+'<span>'+text+'</span></div>';
+  }
+
+  function renderStep(){
+    var a = state.answers, html = "";
+    var contLabel = state.editing ? "Save & return to review" : "Continue";
+
+    if(state.step === "intro"){
+      html =
+        '<div class="step-icon">'+ICON.compass+'</div>' +
+        '<h2 id="stepHeading">Find your advisor match</h2>' +
+        '<p class="sub">Answer a few questions about your finances and goals. We\'ll match you with vetted fiduciary financial advisors — free, with no obligation to work with any of them.</p>' +
+        '<div class="trust">'+ICON.lock+'<span>5 short steps · about 2 minutes · your answers are never sold without your consent</span></div>' +
+        '<div class="actions"><span></span>'+continueBtn("Start", true)+'</div>';
+    }
+
+    else if(state.step === "goal"){
+      html =
+        '<div class="step-icon">'+ICON.compass+'</div>' +
+        '<h2 id="stepHeading">What brings you here today?</h2>' +
+        '<p class="sub">This helps us understand what to prioritize in your match.</p>' +
+        '<fieldset><legend class="sr-only">Your goal</legend><div class="options">' +
+        GOALS.map(function(g){ return optionCard("radio","goal",g.v,a.goal===g.v,ICON[g.icon],g.title,g.desc); }).join("") +
+        '</div></fieldset>' +
+        '<div class="actions">'+backBtn()+continueBtn(contLabel, !!a.goal)+'</div>';
+    }
+
+    else if(state.step === "about"){
+      html =
+        '<div class="step-icon">'+ICON.user+'</div>' +
+        '<h2 id="stepHeading">A little about you</h2>' +
+        '<p class="sub">Age and timeline shape how an advisor would approach your plan.</p>' +
+        '<fieldset><legend>What is your current age?</legend><div class="pills">' +
+        AGES.map(function(v){ return pill("age", v, a.age===v); }).join("") +
+        '</div>'+whyBlock("Helps advisors tailor recommendations to your investment horizon.")+'</fieldset>' +
+        '<fieldset><legend>When would you like to retire?</legend><div class="pills">' +
+        RETIRE_IN.map(function(v){ return pill("retireIn", v, a.retireIn===v); }).join("") +
+        '</div></fieldset>' +
+        '<div class="actions">'+backBtn()+continueBtn(contLabel, !!(a.age && a.retireIn))+'</div>';
+    }
+
+    else if(state.step === "snapshot"){
+      html =
+        '<div class="step-icon">'+ICON.wallet+'</div>' +
+        '<h2 id="stepHeading">Your financial snapshot</h2>' +
+        '<p class="sub">A rough picture is enough — nothing here needs to be exact.</p>' +
+        '<fieldset><legend>Which of these do you currently have?</legend><div class="options">' +
+        ACCOUNTS.map(function(c){ return optionCard("checkbox","accounts",c.v, a.accounts.indexOf(c.v)>-1, null, c.title, c.desc); }).join("") +
+        '</div></fieldset>' +
+        '<fieldset><legend>Estimated investable assets</legend><div class="pills">' +
+        ASSETS.map(function(v){ return pill("assets", v, a.assets===v); }).join("") +
+        '</div>'+whyBlock("A range, not an exact number — it helps match you with advisors who work with clients like you.")+'</fieldset>' +
+        '<div class="trust">'+ICON.lock+'<span>Your information is secure and is only shared with advisors you\'re matched with.</span></div>' +
+        '<div class="actions">'+backBtn()+continueBtn(contLabel, a.accounts.length>0 && !!a.assets)+'</div>';
+    }
+
+    else if(state.step === "location"){
+      var stErr = state.errors.state;
+      html =
+        '<div class="step-icon">'+ICON.pin+'</div>' +
+        '<h2 id="stepHeading">Where should we look for advisors?</h2>' +
+        '<p class="sub">Matches are drawn from advisors licensed to serve your state.</p>' +
+        '<div class="field"><label class="flabel" for="stateSelect">State</label>' +
+        '<select id="stateSelect" '+(stErr?'aria-invalid="true" aria-describedby="stateErr"':'')+'>' +
+        '<option value="">Select your state</option>' +
+        STATES.map(function(s){ return '<option value="'+s+'" '+(a.state===s?"selected":"")+'>'+s+'</option>'; }).join("") +
+        '</select>' +
+        (stErr ? '<div class="err" id="stateErr">'+ICON.alert+'<span>Select your state to continue.</span></div>' : '') +
+        '</div>' +
+        '<fieldset><legend>Meeting preference</legend><div class="options">' +
+        MEETING.map(function(m){ return optionCard("radio","meeting",m.v,a.meeting===m.v,ICON[m.icon],m.title,m.desc); }).join("") +
+        '</div></fieldset>' +
+        '<div class="actions">'+backBtn()+continueBtn(contLabel, true)+'</div>';
+    }
+
+    else if(state.step === "review"){
+      var rows = [
+        {k:"Goal", v: a.goal ? GOALS.filter(function(g){return g.v===a.goal;})[0].title : "—", step:"goal"},
+        {k:"Age / retirement timeline", v: (a.age||"—")+" · "+(a.retireIn||"—"), step:"about"},
+        {k:"Accounts", v: a.accounts.length ? a.accounts.map(function(v){return ACCOUNTS.filter(function(c){return c.v===v;})[0].title;}).join(", ") : "—", step:"snapshot"},
+        {k:"Investable assets", v: a.assets || "—", step:"snapshot"},
+        {k:"Location & meeting", v: (a.state||"—")+" · "+(a.meeting? MEETING.filter(function(m){return m.v===a.meeting;})[0].title : "—"), step:"location"}
+      ];
+      html =
+        '<div class="step-icon">'+ICON.scale+'</div>' +
+        '<h2 id="stepHeading">Review your answers</h2>' +
+        '<p class="sub">Everything here is editable before we look for matches.</p>' +
+        '<div class="rev-list">' +
+        rows.map(function(r){
+          return '<div class="rev-row"><div><div class="rev-k">'+r.k+'</div><div class="rev-v">'+esc(r.v)+'</div></div>' +
+            '<button type="button" class="rev-edit" data-action="edit" data-goto="'+r.step+'">Edit</button></div>';
+        }).join("") +
+        '</div>' +
+        '<div class="method"><h3>'+ICON.scale+' How matching works</h3>' +
+        '<p>We match you using your goal, age, financial snapshot, and location. Every advisor shown is a vetted fiduciary.</p>' +
+        '<p>Advisor order can also be influenced by advertising relationships with SmartAsset — we wanted you to know that before you see your matches.</p></div>' +
+        '<div class="actions">'+backBtn()+'<button type="button" class="btn btn-primary" id="continueBtn" style="margin-left:auto">See my matches '+ICON.arrowright+'</button></div>';
+    }
+
+    else if(state.step === "loading"){
+      html =
+        '<div class="loading">' +
+        '<div class="spinner" aria-hidden="true"></div>' +
+        '<p id="stepHeading">Finding your matches</p>' +
+        '<p class="lstep" id="loadingSub">Checking vetted fiduciaries in '+esc(a.state||"your area")+'…</p>' +
+        '</div>';
+    }
+
+    else if(state.step === "results"){
+      var focus = GOAL_FOCUS[a.goal] || "General financial planning";
+      var meetingLabel = a.meeting ? MEETING.filter(function(m){return m.v===a.meeting;})[0].title : "Remote & in-person";
+      var matches = [
+        {name:"J. Alvarez, CFP®", initials:"JA", focus: focus},
+        {name:"M. Okafor, CFP®", initials:"MO", focus: (a.goal==="estate" ? "Estate & legacy planning, trusts" : "Retirement income, tax-efficient withdrawals")}
+      ];
+      html =
+        '<div class="step-icon">'+ICON.compass+'</div>' +
+        '<h2 id="stepHeading">Your advisor matches</h2>' +
+        '<p class="sub">Based on your answers. Reaching out is free — you\'re never obligated to work with anyone.</p>' +
+        '<div class="sample-note">'+ICON.info+'<span>Sample matches shown for this prototype. A live version would query SmartAsset\'s vetted advisor network.</span></div>' +
+        matches.map(function(m,i){
+          var req = state.requested[i];
+          return '<div class="match-card">' +
+            '<div class="match-top"><div class="match-avatar">'+m.initials+'</div>' +
+            '<div><div class="match-name">'+m.name+'</div><span class="badge">'+ICON.check+' Fee-only fiduciary</span></div></div>' +
+            '<div class="match-meta">' +
+              '<span>'+ICON.wallet+' '+m.focus+'</span>' +
+              '<span>'+ICON.pin+' '+meetingLabel+'</span>' +
+            '</div>' +
+            '<div class="match-actions">' +
+            (req
+              ? '<span class="requested">'+ICON.check+' Introduction requested — they\'ll reach out, no obligation to continue.</span>'
+              : '<button type="button" class="btn btn-primary btn-sm" data-action="request" data-idx="'+i+'">Request an introduction</button>')
+            + '</div></div>';
+        }).join("") +
+        '<button type="button" class="how-link" data-action="how">'+ICON.info+' How matches are chosen</button>' +
+        '<div class="restart"><button type="button" data-action="restart">Start over</button></div>';
+    }
+
+    app.innerHTML = html;
+    app.classList.remove("anim-enter");
+    void app.offsetWidth;
+    app.classList.add("anim-enter");
+    updateProgress();
+    var heading = document.getElementById("stepHeading");
+    if(heading){ heading.setAttribute("tabindex","-1"); heading.focus({preventScroll:true}); }
+  }
+
+  function goTo(step){
+    state.step = step;
+    state.errors = {};
+    window.scrollTo({top: document.querySelector(".product").offsetTop - 12, behavior: (window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto":"smooth")});
+    renderStep();
+  }
+
+  function nextFrom(step){
+    if(state.editing){ state.editing = false; goTo("review"); return; }
+    var idx = STEP_ORDER.indexOf(step);
+    if(step === "review"){
+      goTo("loading");
+      setTimeout(function(){ goTo("results"); }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 250 : 1300);
+      return;
+    }
+    goTo(STEP_ORDER[idx+1]);
+  }
+
+  function prevFrom(step){
+    if(step === "goal"){ goTo("intro"); return; }
+    var idx = STEP_ORDER.indexOf(step);
+    if(idx > 0){ goTo(STEP_ORDER[idx-1]); }
+  }
+
+  app.addEventListener("change", function(e){
+    var t = e.target;
+    var field = t.dataset && t.dataset.field;
+    if(!field) return;
+    if(t.dataset.kind === "checkbox"){
+      var arr = state.answers[field];
+      if(t.checked){ if(arr.indexOf(t.value) === -1) arr.push(t.value); }
+      else { state.answers[field] = arr.filter(function(v){ return v !== t.value; }); }
+    } else {
+      state.answers[field] = t.value;
+    }
+    renderStep();
+  });
+
+  app.addEventListener("change", function(e){
+    if(e.target.id === "stateSelect"){
+      state.answers.state = e.target.value;
+      if(e.target.value) state.errors.state = false;
+    }
+  });
+
+  app.addEventListener("click", function(e){
+    var btn = e.target.closest("button");
+    if(!btn) return;
+
+    if(btn.id === "continueBtn"){
+      if(state.step === "location" && !state.answers.state){
+        state.errors.state = true;
+        renderStep();
+        var sel = document.getElementById("stateSelect");
+        if(sel) sel.focus();
+        return;
+      }
+      nextFrom(state.step);
+      return;
+    }
+    var action = btn.dataset.action;
+    if(action === "back"){ prevFrom(state.step); }
+    else if(action === "edit"){ state.editing = true; goTo(btn.dataset.goto); }
+    else if(action === "request"){
+      state.requested[btn.dataset.idx] = true;
+      renderStep();
+    }
+    else if(action === "how"){
+      document.getElementById("case").open = true;
+      goTo("review");
+      state.editing = false;
+    }
+    else if(action === "restart"){
+      state.answers = { goal:null, age:null, retireIn:null, accounts:[], assets:null, state:null, meeting:null };
+      state.requested = {};
+      state.editing = false;
+      goTo("intro");
+    }
+  });
+
+  renderStep();
+})();
+</script>
